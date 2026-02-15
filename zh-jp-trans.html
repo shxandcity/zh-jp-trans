@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中日翻譯標音助手</title>
+    <style>
+        :root { --primary: #007aff; --bg: #f2f2f7; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px 20px 100px 20px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 500px; }
+        .card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        textarea { width: 100%; height: 100px; border: 1px solid #d1d1d6; border-radius: 12px; padding: 12px; font-size: 16px; box-sizing: border-box; outline: none; -webkit-appearance: none; }
+        .btn-main { width: 100%; background: var(--primary); color: white; border: none; border-radius: 12px; padding: 15px; font-size: 17px; font-weight: 600; margin-top: 15px; cursor: pointer; }
+        .box { background: #fff; padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid #e5e5ea; }
+        ruby { font-size: 24px; line-height: 2.8; color: #1c1c1e; }
+        rt { color: #ff3b30; font-size: 13px; font-weight: 500; }
+        /* 固定底部廣告位 */
+        .ad-sticky-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid #ddd;
+            padding: 10px 0;
+            text-align: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+        .ad-placeholder { color: #ccc; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="card">
+        <h2 style="text-align:center">中日翻譯標音</h2>
+        <textarea id="input" placeholder="輸入中文或日文..."></textarea>
+        <button class="btn-main" onclick="translateNow()">翻譯並標音</button>
+    </div>
+
+    <div id="resultArea" style="display:none">
+        <div class="box">
+            <div id="origOut"></div>
+            <button onclick="speak('orig')" style="margin-top:10px">🔊 朗讀原文</button>
+        </div>
+        <div class="box">
+            <div id="transOut"></div>
+            <button onclick="speak('trans')" style="margin-top:10px">🔊 朗讀譯文</button>
+        </div>
+    </div>
+</div>
+
+<div class="ad-sticky-bottom">
+    <div class="ad-placeholder">
+        ADVERTISEMENT<br>
+        <div id="ad-content">贊助商廣告內容位置</div>
+    </div>
+</div>
+
+<script>
+    // 羅馬字轉假名對照
+    const m={'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','shi':'し','su':'す','se':'せ','so':'そ','ta':'た','chi':'ち','tsu':'つ','te':'て','to':'妥','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','fu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ya':'や','yu':'ゆ','yo':'よ','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ','wa':'わ','wo':'を','ga':'が','gi':'ぎ','gu':'ぐ','ge':'げ','go':'ご','za':'ざ','ji':'じ','zu':'ず','ze':'ぜ','zo':'ぞ','da':'だ','di':'ぢ','du':'づ','de':'で','do':'ど','ba':'ば','bi':'び','bu':'ぶ','be':'べ','bo':'ぼ','pa':'ぱ','pi':'ぴ','pu':'ぷ','pe':'ぺ','po':'ぽ','n':'ん','a':'あ','i':'い','u':'う','e':'え','o':'お'};
+    function toKana(s){if(!s)return "";let r=s.toLowerCase();Object.keys(m).sort((a,b)=>b.length-a.length).forEach(k=>{r=r.replace(new RegExp(k,'g'),m[k])});return r}
+    
+    let cache = { origText: "", transText: "", isJp: false };
+
+    async function translateNow() {
+        const text = document.getElementById('input').value.trim();
+        if(!text) return;
+        const isJp = /[\u3040-\u30ff]/.test(text);
+        const sl = isJp?'ja':'zh-CN', tl = isJp?'zh-CN':'ja';
+        
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dt=rm&q=${encodeURIComponent(text)}`);
+            const d = await res.json();
+            const transText = d[0][0][0];
+            let sr = d[0][1]?d[0][1][3]:'', trr = d[0][1]?d[0][1][2]:'';
+            
+            if(isJp){ sr=toKana(sr); } else { trr=toKana(trr); }
+            
+            document.getElementById('origOut').innerHTML = `<ruby>${text}<rt>${sr}</rt></ruby>`;
+            document.getElementById('transOut').innerHTML = `<ruby>${transText}<rt>${trr}</rt></ruby>`;
+            document.getElementById('resultArea').style.display = 'block';
+            
+            cache = { origText: text, transText: transText, isJp: isJp };
+        } catch(e) { alert('翻譯失敗'); }
+    }
+
+    function speak(type) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(type === 'orig' ? cache.origText : cache.transText);
+        u.lang = type === 'orig' ? (cache.isJp ? 'ja-JP' : 'zh-CN') : (cache.isJp ? 'zh-CN' : 'ja-JP');
+        window.speechSynthesis.speak(u);
+    }
+</script>
+</body>
+</html>
