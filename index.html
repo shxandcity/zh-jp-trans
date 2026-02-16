@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中日精確翻譯助手</title>
+    <title>中日雙標音朗讀</title>
     <style>
         :root { --primary: #007aff; --bg: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px 20px 120px; color: #1c1c1e; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1c1c1e; }
         .app-container { width: 100%; max-width: 500px; margin: auto; }
         .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
         textarea { width: 100%; height: 100px; border: 1px solid #d1d1d6; border-radius: 12px; padding: 12px; font-size: 17px; box-sizing: border-box; outline: none; }
         .btn-main { width: 100%; background: var(--primary); color: white; border: none; border-radius: 12px; padding: 16px; font-size: 18px; font-weight: 600; margin-top: 12px; cursor: pointer; }
-        .result-box { background: white; border-radius: 18px; padding: 25px; margin-top: 15px; border: 1px solid #e5e5ea; }
+        .result-box { background: white; border-radius: 18px; padding: 20px; margin-top: 15px; border: 1px solid #e5e5ea; }
         .section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #f2f2f7; }
         .section:last-child { border-bottom: none; margin-bottom: 0; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .label { font-size: 13px; color: var(--primary); font-weight: 600; }
         .btn-speak { background: #f2f2f7; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .text-content { font-size: 19px; line-height: 1.6; word-break: break-all; font-weight: 500; }
-        .pronun-content { font-size: 14px; color: #ff3b30; margin-top: 8px; line-height: 1.5; word-break: break-all; }
+        .text-content { font-size: 19px; line-height: 1.5; word-break: break-all; font-weight: 500; }
+        .pronun-content { font-size: 14px; color: #ff3b30; margin-top: 6px; line-height: 1.4; word-break: break-all; min-height: 18px; }
         .loading { text-align: center; color: #8e8e93; display: none; margin-top: 10px; }
     </style>
 </head>
@@ -26,10 +26,10 @@
 
 <div class="app-container">
     <div class="card">
-        <h2 style="text-align:center; margin-top:0;">中日精準翻譯標音</h2>
-        <textarea id="input" placeholder="輸入內容..."></textarea>
+        <h2 style="text-align:center; margin-top:0;">中日翻譯大師</h2>
+        <textarea id="input" placeholder="輸入中文或日文..."></textarea>
         <button class="btn-main" onclick="handleProcess()">翻譯並精確標音</button>
-        <div id="loading" class="loading">正在校對常用詞讀音...</div>
+        <div id="loading" class="loading">正在聯繫翻譯服務...</div>
     </div>
 
     <div id="resultArea" style="display:none">
@@ -49,57 +49,28 @@
 </div>
 
 <script>
-    const KANA = {
-        "kya":"きゃ","kyu":"きゅ","kyo":"きょ","sha":"しゃ","shu":"しゅ","sho":"しょ",
-        "cha":"ちゃ","chu":"ちゅ","cho":"ちょ","nya":"にゃ","nyu":"にゅ","nyo":"にょ",
-        "hya":"ひゃ","hyu":"ひゅ","hyo":"ひょ","mya":"みゃ","myu":"みゅ","myo":"みょ",
-        "rya":"りゃ","ryu":"りゅ","ryo":"りょ","gya":"ぎゃ","gyu":"ぎゃ","gyo":"ぎょ",
-        "ja":"じゃ","ju":"じゅ","jo":"じょ","bya":"びゃ","byu":"びゅ","byo":"びょ",
-        "pya":"ぴゃ","pyu":"ぴゅ","pyo":"ぴょ","ti":"てぃ","di":"でぃ","tu":"とぅ",
-        "ka":"か","ki":"き","ku":"く","ke":"け","ko":"こ","sa":"さ","shi":"し","su":"す","se":"せ","so":"そ",
-        "ta":"た","chi":"ち","tsu":"つ","te":"て","to":"と","na":"な","ni":"に","nu":"ぬ","ne":"ね","no":"の",
-        "ha":"は","hi":"ひ","fu":"ふ","he":"へ","ho":"ほ","ma":"ま","mi":"み","mu":"む","me":"め","mo":"も",
-        "ya":"や","yu":"ゆ","yo":"よ","ra":"ら","ri":"り","ru":"る","re":"れ","ro":"ろ",
-        "wa":"わ","wo":"を","ga":"が","gi":"ぎ","gu":"ぐ","ge":"げ","go":"ご",
-        "za":"ざ","ji":"じ","zu":"ず","ze":"ぜ","zo":"ぞ","da":"だ","di":"ぢ","du":"づ","de":"で","do":"ど",
-        "ba":"ば","bi":"び","bu":"ぶ","be":"べ","bo":"ぼ","pa":"ぱ","pi":"ぴ","pu":"ぷ","pe":"ぺ","po":"ぽ",
-        "a":"あ","i":"い","u":"う","e":"え","o":"お","n":"ん"
-    };
+    const KANA = {"kya":"きゃ","kyu":"きゅ","kyo":"きょ","sha":"しゃ","shu":"しゅ","sho":"しょ","cha":"ちゃ","chu":"ちゅ","cho":"ちょ","nya":"にゃ","nyu":"にゅ","nyo":"にょ","hya":"ひゃ","hyu":"ひゅ","hyo":"ひょ","mya":"みゃ","myu":"みゅ","myo":"みょ","rya":"りゃ","ryu":"りゅ","ryo":"りょ","gya":"ぎゃ","gyu":"ぎゅ","gyo":"ぎょ","ja":"じゃ","ju":"じゅ","jo":"じょ","bya":"びゃ","byu":"びゅ","byo":"びょ","pya":"ぴゃ","pyu":"ぴゅ","pyo":"ぴょ","ti":"てぃ","di":"でぃ","tu":"とぅ","ka":"か","ki":"き","ku":"く","ke":"け","ko":"こ","sa":"さ","shi":"し","su":"す","se":"せ","so":"そ","ta":"た","chi":"ち","tsu":"つ","te":"て","to":"と","na":"な","ni":"に","nu":"ぬ","ne":"ね","no":"の","ha":"は","hi":"ひ","fu":"ふ","he":"へ","ho":"ほ","ma":"ま","mi":"み","mu":"む","me":"め","mo":"も","ya":"や","yu":"ゆ","yo":"よ","ra":"ら","ri":"り","ru":"る","re":"れ","ro":"ろ","wa":"わ","wo":"を","ga":"が","gi":"ぎ","gu":"ぐ","ge":"げ","go":"ご","za":"ざ","ji":"じ","zu":"ず","ze":"ぜ","zo":"ぞ","da":"だ","di":"ぢ","du":"づ","de":"で","do":"ど","ba":"ば","bi":"び","bu":"ぶ","be":"べ","bo":"ぼ","pa":"ぱ","pi":"ぴ","pu":"ぷ","pe":"ぺ","po":"ぽ","a":"あ","i":"い","u":"う","e":"え","o":"お","n":"ん"};
 
-    // 專門修正 API 錯誤標音的補丁庫
-    const FIX_LIST = [
-        { romaji: "komekoku", correct: "beikoku" },
-        { romaji: "kome koku", correct: "beikoku" },
-        { romaji: "nitsu", correct: "ni" }, // 修正日本(ni-hon)的分割錯誤
-        { romaji: "mai nichi", correct: "mainichi" }
-    ];
+    const FIX_LIST = [{rom: "komekoku", cor: "beikoku"}, {rom: "kome koku", cor: "beikoku"}];
 
-    let currentData = { orig: "", trans: "", sl: "", tl: "" };
+    let currentData = { origText: "", transText: "", sl: "", tl: "" };
 
     function toKana(str) {
         if (!str) return "";
         let res = str.toLowerCase();
-
-        // 0. 執行 API 錯誤修正補丁
-        FIX_LIST.forEach(item => {
-            res = res.split(item.romaji).join(item.correct);
-        });
-
-        // 1. 長音符號轉換
+        FIX_LIST.forEach(f => { res = res.split(f.rom).join(f.cor); });
         res = res.replace(/ō/g, 'ou').replace(/ū/g, 'uu').replace(/ā/g, 'aa').replace(/ī/g, 'ii').replace(/ē/g, 'ei');
-
-        // 2. 促音處理
         res = res.replace(/([bcdfghjklmpqrstvwxyz])\1/g, 'っ$1');
-
-        // 3. 執行假名轉換
         const keys = Object.keys(KANA).sort((a,b) => b.length - a.length);
-        keys.forEach(k => {
-            const regex = new RegExp(k, 'g');
-            res = res.replace(regex, KANA[k]);
-        });
-
-        // 4. 清理殘留英數與符號
+        keys.forEach(k => { res = res.split(k).join(KANA[k]); });
         return res.replace(/[a-z0-9\-]/g, '').replace(/\s+/g, '').trim();
+    }
+
+    async function fetchInfo(text, sl, tl) {
+        // 使用單次請求嘗試獲取翻譯 + 原文讀音
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dt=rm&q=${encodeURIComponent(text)}`;
+        const r = await fetch(url);
+        return await r.json();
     }
 
     async function handleProcess() {
@@ -112,41 +83,47 @@
         const tl = isJp ? 'zh-CN' : 'ja';
 
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dt=rm&q=${encodeURIComponent(input)}`);
-            const d = await res.json();
-
+            // 1. 第一步：獲取翻譯及原文標音
+            const d1 = await fetchInfo(input, sl, tl);
             let translated = "";
-            d[0].forEach(s => { if(s[0]) translated += s[0] });
+            d1[0].forEach(s => { if(s[0]) translated += s[0] });
+            
+            let origP = "";
+            const rm1 = d1[0].find(r => r[2] && !r[0]);
+            origP = (rm1 ? rm1[3] || rm1[2] : "");
+            if (sl === 'ja') origP = toKana(origP);
 
-            const rmRow = d[0].find(row => row[2] && !row[0]); 
-            let origP = (rmRow ? rmRow[3] || rmRow[2] : "");
-            if (isJp) origP = toKana(origP);
-
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${tl}&tl=en&dt=rm&q=${encodeURIComponent(translated)}`);
-            const d2 = await res2.json();
-            const rmRow2 = d2[0].find(row => row[2] && !row[0]);
-            let transP = (rmRow2 ? rmRow2[3] || rmRow2[2] : "");
+            // 2. 第二步：專門獲取譯文標音
+            const d2 = await fetchInfo(translated, tl, sl); // 反向獲取譯文讀音
+            let transP = "";
+            const rm2 = d2[0].find(r => r[2] && !r[0]);
+            transP = (rm2 ? rm2[3] || rmRow2[2] || "" : "");
             if (tl === 'ja') transP = toKana(transP);
 
-            currentData = { orig: input, trans: translated, sl, tl };
+            // 渲染
+            currentData = { origText: input, transText: translated, sl, tl };
             document.getElementById('origText').innerText = input;
-            document.getElementById('origPronun').innerText = origP;
+            document.getElementById('origPronun').innerText = origP || "(無法讀取標音)";
             document.getElementById('transText').innerText = translated;
-            document.getElementById('transPronun').innerText = transP;
+            document.getElementById('transPronun').innerText = transP || "(無法讀取標音)";
             
             document.getElementById('resultArea').style.display = 'block';
-        } catch (e) { console.error(e); }
-        finally { document.getElementById('loading').style.display = 'none'; }
+        } catch (e) {
+            console.error(e);
+            alert("API 請求限制，請稍候再試");
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 
     function speak(type) {
-        const text = currentData[type];
-        const lang = (type === 'orig' ? currentData.sl : currentData.tl);
-        if (!text || !window.speechSynthesis) return;
+        const text = type === 'orig' ? currentData.origText : currentData.transText;
+        const lang = type === 'orig' ? currentData.sl : currentData.tl;
+        if (!text) return;
         window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = lang === 'ja' ? 'ja-JP' : 'zh-CN';
-        window.speechSynthesis.speak(msg);
+        const m = new SpeechSynthesisUtterance(text);
+        m.lang = lang === 'ja' ? 'ja-JP' : 'zh-CN';
+        window.speechSynthesis.speak(m);
     }
 </script>
 </body>
